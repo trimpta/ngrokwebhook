@@ -1,4 +1,5 @@
 {
-    "ngrok_auth_token": "your_ngrok_auth_token_here",
-    "discord_webhook_url": "your_discord_webhook_url_here"
+    "ngrok_auth_token": "your_auth_token",
+    "discord_webhook_url": "your_webhook_url",
+    "region": "us"  # Default region, can be overridden by the command line argument
 }
