@@ -3,7 +3,7 @@ import time
 import json
 import argparse
 import requests
-from pyngrok import ngrok
+from pyngrok import ngrok, conf
 
 # Load configuration from config.json
 def load_config():
@@ -12,9 +12,7 @@ def load_config():
 
 # Function to post message to Discord webhook
 def post_to_discord(webhook_url, message):
-    data = {
-        "content": message
-    }
+    data = {"content": message}
     response = requests.post(webhook_url, json=data)
     if response.status_code == 204:
         print("Successfully posted to Discord")
@@ -22,31 +20,27 @@ def post_to_discord(webhook_url, message):
         print(f"Failed to post to Discord: {response.status_code}, {response.text}")
 
 def main(port, region, additional_message=None):
-    # Load configuration
     config = load_config()
     NGROK_AUTH_TOKEN = config["ngrok_auth_token"]
     DISCORD_WEBHOOK_URL = config["discord_webhook_url"]
-    DEFAULT_REGION = config.get("region", "in")  # Default to 'in' if region is not specified in config
+    DEFAULT_REGION = config.get("region", "in")  # Default to 'in' if not specified
 
-    # Use the region passed as argument or default to the one in the config
     ngrok_region = region if region else DEFAULT_REGION
 
-    # Authenticate ngrok
+    # Set ngrok configuration
+    conf.get_default().region = ngrok_region
     ngrok.set_auth_token(NGROK_AUTH_TOKEN)
 
-    # Start the ngrok tunnel
     print(f"Starting ngrok tunnel on port {port} in region {ngrok_region}...")
-    tunnel = ngrok.connect(port, "tcp", region=ngrok_region)
+    tunnel = ngrok.connect(port, "tcp")
     public_url = tunnel.public_url.replace("tcp://", "")
     print(f"ngrok tunnel started: {public_url}")
 
-    # Post the ngrok public URL to Discord
     message = f"Port {port} is available at {public_url}."
     if additional_message:
         message += f" {additional_message}"
     post_to_discord(DISCORD_WEBHOOK_URL, message)
 
-    # Keep the script running
     try:
         while True:
             time.sleep(1)
